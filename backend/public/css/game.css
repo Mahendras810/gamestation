@@ -1,0 +1,53 @@
+.game-container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.game-header {
+  background: #2c3e50;
+  color: white;
+  padding: 10px;
+  border-radius: 5px;
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.game-area {
+  border: 2px solid #34495e;
+  border-radius: 5px;
+  margin-bottom: 20px;
+  background-color: #4CAF50;
+}
+
+#gameCanvas {
+  display: block;
+  width: 100%;
+  background-color: #4CAF50;
+}
+
+.controls {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.bowling-controls, .batting-controls {
+  flex: 1;
+  padding: 15px;
+  background: #ecf0f1;
+  border-radius: 5px;
+}
+
+.shot-buttons {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+@media (max-width: 768px) {
+  .controls {
+    flex-direction: column;
+  }
+}
