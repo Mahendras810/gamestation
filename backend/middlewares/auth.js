@@ -1,36 +1,36 @@
 const jwt = require('jsonwebtoken');
 const { User } = require('../models');
 
-module.exports = async (req, res, next) => {
+module.exports = (req, res, next) => {
   try {
-    const token = req.header('Authorization')?.replace('Bearer ', '');
-    
+    // Session-based login
+    if (req.session?.user) {
+      req.userId = req.session.user.id;
+      return next();
+    }
+
+    // JWT token from headers or cookies
+    const authHeader = req.headers.authorization || req.cookies?.token;
+    let token;
+
+    if (authHeader?.startsWith('Bearer ')) {
+      token = authHeader.split(' ')[1];
+    } else if (typeof authHeader === 'string') {
+      token = authHeader;
+    }
+
     if (!token) {
-      return res.status(401).json({ 
-        success: false,
-        message: 'Authentication required' 
-      });
+      // 👇 Redirect to login if it's a browser request
+      if (req.accepts('html')) return res.redirect('/login');
+      return res.status(401).json({ success: false, message: 'Authentication required' });
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findByPk(decoded.userId, {
-      attributes: ['id', 'username', 'email', 'status']
-    });
-
-    if (!user || user.status !== 'active') {
-      return res.status(401).json({ 
-        success: false,
-        message: 'User not found or account suspended' 
-      });
-    }
-
-    req.user = user;
-    req.userId = user.id;
+    req.userId = decoded.userId;
     next();
   } catch (error) {
-    res.status(401).json({ 
-      success: false,
-      message: 'Invalid or expired token' 
-    });
+    if (req.accepts('html')) return res.redirect('/login');
+    return res.status(401).json({ success: false, message: 'Invalid or expired token' });
   }
 };
+

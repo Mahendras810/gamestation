@@ -1,64 +1,37 @@
 module.exports = (sequelize, DataTypes) => {
   const Transaction = sequelize.define('Transaction', {
-    amount: {
-      type: DataTypes.DECIMAL(15, 2),
+    userId: {
+      type: DataTypes.INTEGER,
       allowNull: false
     },
     type: {
-      type: DataTypes.ENUM(
-        'deposit', 
-        'withdrawal', 
-        'bet', 
-        'win', 
-        'bonus', 
-        'refund'
-      ),
+      type: DataTypes.ENUM('deposit', 'withdraw', 'bet', 'win', 'refund'),
       allowNull: false
     },
-    status: {
-      type: DataTypes.ENUM(
-        'pending',
-        'completed',
-        'failed',
-        'cancelled'
-      ),
-      defaultValue: 'pending'
+    amount: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: false
     },
-    reference: {
+    description: {
       type: DataTypes.STRING,
-      unique: true
+      allowNull: true
     },
-    metadata: {
-      type: DataTypes.JSON
+    walletId: {
+      type: DataTypes.INTEGER,
+      allowNull: true
+    },
+    status: {
+      type: DataTypes.STRING, // 👈 Add this field
+      allowNull: true,
+      defaultValue: 'completed' // optional default
     }
   }, {
-    timestamps: true,
-    indexes: [
-      {
-        fields: ['reference']
-      },
-      {
-        fields: ['walletId']
-      }
-    ]
+    timestamps: true
   });
 
   Transaction.associate = (models) => {
-    Transaction.belongsTo(models.Wallet, {
-      foreignKey: 'walletId',
-      as: 'wallet'
-    });
-    
-    Transaction.belongsTo(models.User, {
-      foreignKey: 'userId',
-      as: 'user'
-    });
-    
-    Transaction.belongsTo(models.Game, {
-      foreignKey: 'gameId',
-      as: 'game',
-      optional: true
-    });
+    Transaction.belongsTo(models.User, { foreignKey: 'userId', as: 'user' });
+    Transaction.belongsTo(models.Wallet, { foreignKey: 'walletId', as: 'wallet' });
   };
 
   return Transaction;

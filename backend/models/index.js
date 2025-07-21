@@ -1,18 +1,27 @@
+// backend/models/index.js
+const fs = require('fs');
 const path = require('path');
-const { Sequelize, DataTypes } = require('sequelize');
+const Sequelize = require('sequelize');
 const { sequelize } = require('../config/db');
 
 const db = {};
 
-// Automatically import all models
-const modelFiles = ['User', 'Game', 'Wallet', 'Transaction'];
+const basename = path.basename(__filename);
 
-modelFiles.forEach(modelFile => {
-  const model = require(path.join(__dirname, modelFile))(sequelize, DataTypes);
-  db[model.name] = model;
-});
+// Read all model files (except index.js itself)
+fs
+  .readdirSync(__dirname)
+  .filter(file =>
+    file.indexOf('.') !== 0 &&
+    file !== basename &&
+    file.slice(-3) === '.js'
+  )
+  .forEach(file => {
+    const model = require(path.join(__dirname, file))(sequelize, Sequelize.DataTypes);
+    db[model.name] = model;
+  });
 
-// Set up associations if any
+// ✅ Now associate models
 Object.keys(db).forEach(modelName => {
   if (db[modelName].associate) {
     db[modelName].associate(db);

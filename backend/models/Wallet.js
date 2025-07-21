@@ -1,39 +1,24 @@
 module.exports = (sequelize, DataTypes) => {
   const Wallet = sequelize.define('Wallet', {
-    balance: {
-      type: DataTypes.DECIMAL(15, 2),
-      defaultValue: 0.00,
-      allowNull: false,
-      validate: {
-        min: 0
-      }
-    },
-    currency: {
-      type: DataTypes.STRING,
-      defaultValue: 'INR'
-    },
-    userId: {  // Explicitly define the foreign key here
+    userId: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      references: {
-        model: 'Users',
-        key: 'id'
-      }
+      unique: true
+    },
+    balance: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: false,
+      defaultValue: 0.0
     }
   }, {
     timestamps: true
   });
 
   Wallet.associate = (models) => {
-    Wallet.belongsTo(models.User, {
-      foreignKey: 'userId',
-      as: 'user'
-    });
-    
-    Wallet.hasMany(models.Transaction, {
-      foreignKey: 'walletId',
-      as: 'transactions'
-    });
+    Wallet.belongsTo(models.User, { foreignKey: 'userId', as: 'user' });
+
+    // ✅ Add this line
+    Wallet.hasMany(models.Transaction, { foreignKey: 'walletId', as: 'transactions' });
   };
 
   return Wallet;

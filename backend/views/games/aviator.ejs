@@ -1,0 +1,667 @@
+<%- include('../partials/header', { title: 'Aviator Game' }) %>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    overflow: hidden;
+    font-family: 'Segoe UI', sans-serif;
+    background-color: #0d0d0d;
+    color: white;
+  }
+
+  .top-header {
+    background-color: #1a1a1a;
+    padding: 10px 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #333;
+    position: relative;
+    z-index: 100;
+  }
+
+  .logo {
+    font-size: 20px;
+    font-weight: 700;
+    color: white;
+    letter-spacing: 1px;
+  }
+
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+  }
+
+  .how-to-play {
+    background-color: orange;
+    color: black;
+    font-weight: bold;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 14px;
+    cursor: pointer;
+  }
+
+  .wallet {
+    color: #4caf50;
+    font-weight: bold;
+    font-size: 15px;
+  }
+
+  .menu-toggle {
+    background-color: #2a2a2a;
+    padding: 6px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    color: white;
+  }
+
+  .dropdown-menu {
+    position: absolute;
+    top: 50px;
+    right: 10px;
+    background-color: #1e1e1e;
+    border: 1px solid #333;
+    display: none;
+    flex-direction: column;
+    z-index: 999;
+    min-width: 200px;
+    border-radius: 6px;
+  }
+
+  .dropdown-menu a {
+    display: block;
+    padding: 10px 12px;
+    color: #ccc;
+    text-decoration: none;
+  }
+
+  .dropdown-menu a:hover {
+    background-color: #333;
+    color: white;
+  }
+
+  .tab-content {
+    display: none;
+  }
+  .tab-content.active {
+    display: block;
+  }
+
+  .tab-button {
+    background-color: #2a2a2a;
+    border: none;
+    color: white;
+    padding: 8px 10px;
+    margin-right: 5px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+  }
+
+  .tab-button.active {
+    background-color: orange;
+    color: black;
+    font-weight: bold;
+  }
+
+  #game-container {
+    flex: 1;
+    background-color: #1a1a1a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+
+  }
+
+  canvas#phaser-canvas {
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  .bet-section {
+    position: absolute;
+    bottom: 10px;
+    left: 15px;
+    right: 15px;
+    display: flex;
+    justify-content: space-evenly;
+    gap: 15px;
+  }
+
+
+  .bet-box {
+    background-color: #2a2a2a;
+    padding: 10px 15px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  #betAmount {
+    width: 80px;
+    padding: 5px;
+    font-size: 16px;
+    border: none;
+    border-radius: 5px;
+  }
+
+  .btn-bet {
+    padding: 6px 12px;
+    font-weight: bold;
+    border: none;
+    border-radius: 5px;
+    background-color: #4caf50;
+    color: white;
+    cursor: pointer;
+  }
+
+  .btn-bet.btn-danger {
+    background-color: #e53935;
+  }
+
+  .btn-bet.btn-warning {
+    background-color: orange;
+    color: black;
+  }
+
+
+  .round-info-box {
+    display: none;
+    background-color: #222;
+    padding: 10px;
+    border-radius: 6px;
+    color: #eee;
+    position: absolute;
+    top: 25px;
+    left: 0;
+    width: 300px;
+    z-index: 999;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+  }
+
+  .multiplier-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+    margin-top: 10px;
+    max-height: 50px;
+    overflow-y: hidden;
+    transition: max-height 0.3s ease;
+  }
+  
+  .multiplier-bar.expanded {
+    max-height: 200px; /* allow scrolling space */
+    overflow-y: auto;
+  }
+
+
+  .multiplier {
+    background-color: #222;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-weight: bold;
+    font-size: 13px;
+  }
+
+  .col-1 { background-color: #1e88e5; }
+  .col-2 { background-color: #43a047; }
+  .col-3 { background-color: #e53935; }
+
+  .game-wrapper {
+    display: flex;
+    flex-wrap: wrap;
+    height: calc(100vh - 60px);
+    overflow: hidden;
+  }
+
+  .left-box {
+    width: 100%;
+    max-width: 30%;
+    background-color: #181818;
+    border-right: 1px solid #333;
+    padding: 10px;
+    box-sizing: border-box;
+    overflow-y: auto;
+  }
+
+  .results-popup {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.7);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 99999;
+  }
+
+  .results-popup-content {
+    background: #1e1e1e;
+    padding: 20px;
+    border-radius: 10px;
+    width: 90%;
+    max-width: 400px;
+    max-height: 80vh;
+    overflow-y: auto;
+  }
+
+  .results-popup-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    color: white;
+  }
+
+  .results-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+
+  .right-box {
+    flex: 1;
+    background-color: #121212;
+    padding: 15px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hidden-multiplier {
+    display: none;
+  }
+
+  @media (max-width: 768px) {
+    .left-box,
+    .right-box {
+      width: 100%;
+      max-width: 100%;
+      padding: 10px;
+    }
+
+    .game-wrapper {
+      flex-direction: column;
+    }
+
+    .header-actions {
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 5px;
+    }
+
+    .dropdown-menu {
+      right: 10px;
+      top: 55px;
+    }
+
+    .bet-section {
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .bet-box {
+      width: 100%;
+      justify-content: space-between;
+    }
+
+    .multiplier-bar {
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .round-info-box {
+      width: 100%;
+      left: 0;
+    }
+  }
+</style>
+
+<!-- ✅ HEADER BAR -->
+<div class="top-header">
+  <div class="logo">AVIATOR</div>
+  <div class="header-actions">
+    <button class="how-to-play"><i class="fas fa-question-circle"></i> How to play? </button>
+    <div class="wallet" id="walletDisplay">
+      <% if (user && user.walletBalance !== undefined) { %>
+        ₹<span id="walletAmount"><%= user.walletBalance.toFixed(2) %></span> INR
+      <% } else { %>
+        <a href="/login" style="color:#fff; text-decoration:underline;">🔒 Login</a>
+      <% } %>
+    </div>
+    <div class="menu-toggle" onclick="toggleMenu()">
+      <i class="fas fa-bars"></i>
+    </div>
+  </div>
+</div>
+
+<!-- ✅ DROPDOWN MENU -->
+<div class="dropdown-menu" id="menuBox">
+  <a href="#" onclick="toggleSound()">🔊 Sound: <span id="soundStatus">On</span></a>
+  <a href="#" onclick="toggleMusic()">🎵 Music: <span id="musicStatus">On</span></a>
+  <a href="/wallet">📜 My Bet History</a>
+  <a href="#" onclick="toggleLimits()">📋 Game Limits</a>
+  <a href="#">🌐 Language: English</a>
+</div>
+<!-- ✅ MAIN GAME AREA -->
+<div class="game-wrapper">
+  <!-- 🧾 LEFT PANEL -->
+  <div class="left-box">
+    <div class="tabs">
+      <button class="tab-button active" onclick="switchTab('all')">All Bets</button>
+      <button class="tab-button" onclick="switchTab('my')">My Bets</button>
+      <button class="tab-button" onclick="switchTab('top')">Top Players</button>
+    </div>
+    <div id="tab-all" class="tab-content active">
+      <% allBets.forEach(bet => { %>
+        <div class="bet-entry">
+          <img src="/images/user.png" alt="avatar" />
+          <div>
+            <strong><%= bet.username %></strong> — ₹<%= bet.amount %> | Out at <%= bet.multiplier %>x
+          </div>
+        </div>
+      <% }) %>
+    </div>
+    <div id="tab-my" class="tab-content">
+      <% if (myBets.length === 0) { %>
+        <p>No bets yet.</p>
+      <% } else { %>
+        <% myBets.forEach(bet => { %>
+          <div class="bet-entry">
+            <img src="/images/user.png" alt="avatar" />
+            <div>
+              <strong>You</strong> — ₹<%= bet.amount %> | Out at <%= bet.multiplier %>x
+            </div>
+          </div>
+        <% }) %>
+      <% } %>
+    </div>
+    <div id="tab-top" class="tab-content">
+      <% topBets.forEach(bet => { %>
+        <div class="bet-entry">
+          <img src="/images/user.png" alt="avatar" />
+          <div>
+            <strong><%= bet.username %></strong> — ₹<%= bet.amount %> | Win <%= bet.multiplier %>x
+          </div>
+        </div>
+      <% }) %>
+    </div>
+  </div>
+
+  <!-- ✈️ RIGHT PANEL -->
+  <div class="right-box">
+    <!-- 🔁 Last 50 Multipliers -->
+    <div class="multiplier-bar">
+      <% last50Rounds.slice(0, 15).forEach((r, index) => { %>
+        <div class="multiplier col-<%= r.size %> <%= index >= 10 ? 'hidden-multiplier' : '' %>">
+          <%= r.multiplier %>x
+        </div>
+      <% }) %>
+      <span class="round-toggle" onclick="openResultsPopup()">⬇️</span>
+    </div>
+
+    <!-- 📜 Round Info Toggle -->
+    <div class="round-toggle-container">
+      <div class="round-toggle" onclick="toggleRoundInfo()">
+        Round ID: <span id="roundId"><%= currentRound.id %></span> ⬇️
+      </div>
+      <div class="round-info-box" id="round-info-box">
+        <div style="text-align: right;">
+          <button onclick="toggleRoundInfo()" style="background:none;border:none;font-size:16px;color:white;">❌</button>
+        </div>
+        <p><strong>Seed:</strong> <span id="roundSeed"><%= currentRound.seed || 'N/A' %></span></p>
+        <p><strong>Result:</strong> <span id="roundResult"><%= currentRound.result || 'Pending' %></span></p>
+        <p><strong>Cipher:</strong> <span id="roundCipher"><%= currentRound.cipher %></span></p>
+        <button onclick="copyCipher()">📋 Copy</button>
+      </div>
+      <!-- 🔍 Full Results Popup -->
+      <div id="results-popup" class="results-popup">
+        <div class="results-popup-content">
+          <div class="results-popup-header">
+            <h3>Last 50 Round Results</h3>
+            <button onclick="closeResultsPopup()">❌</button>
+          </div>
+          <div class="results-list">
+            <% last50Rounds.forEach((r) => { %>
+              <div class="multiplier col-<%= r.size %>"><%= r.multiplier %>x</div>
+            <% }) %>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ✈️ GAME ANIMATION CANVAS -->
+    <div class="aviator-animation" id="game-container">
+      <div id="loading">Loading game assets...</div>
+    </div>
+
+    <!-- 💰 BET/CANCEL/CASHOUT -->
+    <div class="bet-section">
+      <div class="bet-box">
+        <input type="number" id="betAmount1" value="10" min="10" max="10000" />
+        <button class="btn-bet" id="betActionBtn1" onclick="handleBetClick(1)">BET ₹10</button>
+      </div>
+      <div class="bet-box">
+        <input type="number" id="betAmount2" value="10" min="10" max="10000" />
+        <button class="btn-bet" id="betActionBtn2" onclick="handleBetClick(2)">BET ₹10</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+  const IS_LOGGED_IN = "<%= user ? 'true' : 'false' %>";
+  const CURRENT_USER_ID = "<%= user ? user.id : '' %>";
+  const CURRENT_GAME_ID = "<%= currentRound.id %>";
+</script>
+<script src="/js/games/aviator.js"></script>
+
+
+<script>
+  let gameState = 'bet'; // Options: 'bet', 'cancel', 'cashout'
+  let currentBetAmount = 10;
+  let isSoundOn = true;
+  let isMusicOn = true;
+
+  document.addEventListener('DOMContentLoaded', () => {
+    loadPhaserGame();
+
+    document.getElementById('betAmount1').addEventListener('input', e => {
+      currentBetAmount = parseFloat(e.target.value);
+      updateBetButtonText(1, currentBetAmount);
+    });
+
+    document.getElementById('betAmount2').addEventListener('input', e => {
+      currentBetAmount = parseFloat(e.target.value);
+      updateBetButtonText(2, currentBetAmount);
+    });
+  });
+
+
+  function loadPhaserGame() {
+    const config = {
+      type: Phaser.AUTO,
+      width: document.getElementById('game-container').offsetWidth,
+      height: document.getElementById('game-container').offsetHeight,
+      parent: 'game-container',
+      scene: [window.GameScene || {}],
+    };
+
+    try {
+      new Phaser.Game(config);
+      document.getElementById('loading')?.remove();
+    } catch (e) {
+      console.error(e);
+      document.getElementById('loading').textContent = 'Failed to load game';
+    }
+  }
+
+
+  // 🔁 BET / CANCEL / CASHOUT BUTTON
+
+  function handleBetClick(slot) {
+    const amount = parseFloat(document.getElementById(`betAmount${slot}`).value);
+    const btn = document.getElementById(`betActionBtn${slot}`);
+
+    if (!IS_LOGGED_IN || !CURRENT_USER_ID) {
+      showAlert('Please log in to place a bet.', false);
+      return;
+    }
+
+    if (gameState === 'bet') {
+      socket.emit('placeBet', { userId: CURRENT_USER_ID, amount });
+      gameState = 'cancel';
+    } else if (gameState === 'cancel') {
+      socket.emit('cancelBet', { userId: CURRENT_USER_ID });
+      gameState = 'bet';
+    } else if (gameState === 'cashout') {
+      socket.emit('cashout', { userId: CURRENT_USER_ID });
+      gameState = 'bet';
+    }
+
+    updateBetButtonText(slot, amount);
+  }
+
+
+  function updateBetButtonText(slot, amount) {
+    const btn = document.getElementById(`betActionBtn${slot}`);
+    if (gameState === 'bet') {
+      btn.textContent = `BET ₹${amount}`;
+      btn.className = 'btn-bet';
+    } else if (gameState === 'cancel') {
+      btn.textContent = 'CANCEL BET';
+      btn.className = 'btn-bet btn-danger';
+    } else if (gameState === 'cashout') {
+      btn.textContent = 'CASHOUT';
+      btn.className = 'btn-bet btn-warning';
+    }
+  }
+
+
+  // 📡 Socket Listeners
+  socket.on('betAccepted', () => {
+    console.log('Bet accepted');
+  });
+
+  socket.on('roundStarted', () => {
+    gameState = 'cashout';
+    updateBetButtonText();
+  });
+
+  socket.on('roundEnded', () => {
+    gameState = 'bet';
+    updateBetButtonText();
+    refreshWallet();
+  });
+
+  socket.on('walletUpdated', (balance) => {
+    document.getElementById('walletDisplay').textContent = `₹${parseFloat(balance).toFixed(2)} INR`;
+  });
+
+  function refreshWallet() {
+    fetch('/api/wallet')
+      .then(res => res.json())
+      .then(data => {
+        if (data.balance !== undefined) {
+          document.getElementById('walletDisplay').textContent = `₹${parseFloat(data.balance).toFixed(2)} INR`;
+        }
+      });
+  }
+
+  // 🔊 Sound/Music Toggle
+  function toggleSound() {
+    isSoundOn = !isSoundOn;
+    document.getElementById('soundStatus').textContent = isSoundOn ? 'On' : 'Off';
+  }
+
+  function toggleMusic() {
+    isMusicOn = !isMusicOn;
+    document.getElementById('musicStatus').textContent = isMusicOn ? 'On' : 'Off';
+  }
+
+  // 📋 Cipher Copy
+  function copyCipher() {
+    const cipher = document.getElementById('roundCipher').innerText;
+    navigator.clipboard.writeText(cipher);
+    alert('Cipher copied!');
+  }
+
+  // 🔽 Round Toggle
+  function toggleRoundInfo() {
+    const info = document.getElementById('round-info-box');
+    info.style.display = info.style.display === 'block' ? 'none' : 'block';
+  }
+
+  function toggleMultiplierBar() {
+    const multipliers = document.querySelectorAll('.multiplier-bar .multiplier');
+    const toggleBtn = document.querySelector('.multiplier-bar .round-toggle');
+
+    const hiddenItems = Array.from(multipliers).filter(m => m.classList.contains('hidden-multiplier'));
+
+    if (hiddenItems.length > 0) {
+      hiddenItems.forEach(m => m.classList.remove('hidden-multiplier'));
+      toggleBtn.textContent = '⬆️';
+    } else {
+      multipliers.forEach((m, index) => {
+        if (index >= 10) m.classList.add('hidden-multiplier');
+      });
+      toggleBtn.textContent = '⬇️';
+    }
+  }
+
+
+  function switchTab(tab) {
+    document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    document.querySelector(`[onclick="switchTab('${tab}')"]`).classList.add('active');
+    document.getElementById(`tab-${tab}`).classList.add('active');
+  }
+
+  function openResultsPopup() {
+    document.getElementById('results-popup').style.display = 'flex';
+  }
+
+  function closeResultsPopup() {
+    document.getElementById('results-popup').style.display = 'none';
+  }
+
+</script>
+<script>
+  function toggleMenu() {
+    const menuBox = document.getElementById('menuBox');
+    if (menuBox.style.display === 'block') {
+      menuBox.style.display = 'none';
+    } else {
+      menuBox.style.display = 'block';
+    }
+  }
+
+  document.addEventListener('click', function (event) {
+    const menuBox = document.getElementById('menuBox');
+    const toggle = document.querySelector('.menu-toggle');
+
+    if (!menuBox.contains(event.target) && !toggle.contains(event.target)) {
+      menuBox.style.display = 'none';
+    }
+  });
+
+</script>
+

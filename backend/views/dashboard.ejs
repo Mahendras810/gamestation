@@ -1,0 +1,183 @@
+<%- include("partials/header", { title: 'GameStation' }) %>
+
+<style>
+.wallet {
+  font-weight: bold;
+  color: #4caf50;
+  font-size: 16px;
+}
+</style>
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <img src="/images/logo.png" alt="GameStation Logo" height="40" />
+      GameStation
+    </a>
+
+    <div class="navbar-nav ms-auto">
+      <% if (user) { %>
+  <span class="nav-link text-white">
+    <i class="fas fa-user me-1"></i> <%= user.username %> |
+    <i class="fas fa-wallet me-1"></i> ₹<%= Number(user.walletBalance).toFixed(2) %>
+  </span>
+  <a class="nav-link" href="/wallet">
+    <i class="fas fa-wallet me-1"></i> Wallet
+  </a>
+  <a class="nav-link" href="/profile">
+    <i class="fas fa-user-cog me-1"></i> Profile
+  </a>
+  <a class="nav-link" href="/logout">
+    <i class="fas fa-sign-out-alt me-1"></i> Logout
+  </a>
+<% } else { %>
+  <a class="nav-link" href="/login">
+    <i class="fas fa-sign-in-alt me-1"></i> Login
+  </a>
+  <a class="nav-link" href="/register">
+    <i class="fas fa-user-plus me-1"></i> Register
+  </a>
+<% } %>
+
+    </div>
+  </div>
+</nav>
+
+<div class="container my-4">
+  <div class="row">
+    <div class="col-md-4">
+      <% if (user) { %>
+        <div class="card wallet-card mb-4">
+            <div class="card-body">
+                <div class="wallet">
+                  <% if (user) { %>
+                    ₹<%= user.wallet?.balance.toFixed(2) || '0.00' %> INR
+                  <% } else { %>
+                    <a href="/login" style="color: #4caf50; text-decoration: underline;">🔒 Login to see wallet</a>
+                  <% } %>
+                </div>
+
+                <div class="d-grid gap-2">
+                <a href="/wallet" class="btn btn-light">
+                    <i class="fas fa-wallet me-1"></i>Manage Wallet
+                </a>
+                <a href="/wallet" class="btn btn-success">
+                    <i class="fas fa-plus-circle me-1"></i>Deposit
+                </a>
+                <a href="/wallet" class="btn btn-danger">
+                    <i class="fas fa-minus-circle me-1"></i>Withdraw
+                </a>
+                </div>
+            </div>
+        </div>
+
+      <% } else { %>
+        <div class="card text-center wallet-card mb-4 bg-secondary text-white">
+          <div class="card-body">
+            <h5 class="card-title">Guest Wallet</h5>
+            <p class="card-text">Please <a href="/login" class="text-white fw-bold">login</a> or <a href="/register" class="text-white fw-bold">register</a> to use wallet features.</p>
+          </div>
+        </div>
+      <% } %>
+    </div>
+    <% if (user && user.wallet) { %>
+      <span class="wallet" id="liveWallet">₹<%= user.wallet.balance.toFixed(2) %> INR</span>
+    <% } else { %>
+      <span class="wallet" id="liveWallet">₹0.00 INR</span>
+    <% } %>
+
+
+    <div class="card mb-4">
+      <div class="card-header bg-success text-white">
+        🏆 Last 5 Winners
+      </div>
+      <ul class="list-group list-group-flush">
+        <% lastWinners?.forEach(winner => { %>
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            <%= winner.username %>
+            <span class="badge bg-primary">₹<%= winner.amount %></span>
+          </li>
+        <% }) %>
+      </ul>
+    </div>
+
+    <section id="gameSection">
+      <h3 class="mb-3"><i class="fas fa-list-ul me-2"></i>Featured Games</h3>
+      <div id="gameCarousel" class="carousel slide" data-bs-ride="carousel">
+        <div class="carousel-inner">
+          <div class="carousel-item active">
+            <div class="row">
+              <!-- Game 1 -->
+              <div class="col-md-6 mb-4">
+                <div class="card">
+                  <img src="/images/cricket-thumbnail.jpg" class="card-img-top" alt="Cricket" />
+                  <div class="card-body">
+                    <h5 class="card-title">Cricket Premier</h5>
+                    <p class="card-text">Experience realistic cricket gameplay</p>
+                    <button class="btn btn-primary" onclick="startGame('cricket')">Play Now</button>
+                  </div>
+                </div>
+              </div>
+              <!-- Game 2 -->
+              <div class="col-md-6 mb-4">
+                <div class="card">
+                  <img src="/images/aviator-thumbnail.jpg" class="card-img-top" alt="Aviator" />
+                  <div class="card-body">
+                    <h5 class="card-title">Aviator</h5>
+                    <p class="card-text">Crash multiplier game with excitement!</p>
+                    <button class="btn btn-success" onclick="startGame('aviator')">Play Now</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- Add more carousel-item blocks if needed -->
+        </div>
+
+        <button class="carousel-control-prev" type="button" data-bs-target="#gameCarousel" data-bs-slide="prev">
+          <span class="carousel-control-prev-icon"></span>
+        </button>
+        <button class="carousel-control-next" type="button" data-bs-target="#gameCarousel" data-bs-slide="next">
+          <span class="carousel-control-next-icon"></span>
+        </button>
+      </div>
+    </section>
+  </div>
+</div>
+<script>
+  const IS_LOGGED_IN = "<%= user ? 'true' : 'false' %>";
+
+  function checkLoginBeforeBet() {
+    if (IS_LOGGED_IN !== "true") {
+      alert("🛑 Please login to play this game.");
+      window.location.href = "/login";
+      return false;
+    }
+    return true;
+  }
+
+  function startGame(game) {
+    window.location.href = `/${game}`;
+  }
+
+</script>
+<script>
+  function refreshWalletBalance() {
+    fetch('/wallet/balance')
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          document.getElementById('liveWallet').textContent = `₹${parseFloat(data.balance).toFixed(2)} INR`;
+        }
+      })
+      .catch(() => {
+        document.getElementById('liveWallet').textContent = `₹0.00 INR`;
+      });
+  }
+
+  setInterval(refreshWalletBalance, 30000); // every 30 seconds
+</script>
+
+
+
+
+<%- include("partials/footer") %>

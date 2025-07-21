@@ -8,7 +8,11 @@ const authController = {
       const { username, email, password } = req.body;
       
       // Check if user exists
-      const existingUser = await User.findOne({ where: { email } });
+      const existingUser = await User.findOne({
+        where: { email },
+        attributes: ['id', 'username', 'email', 'password']
+      });
+
       if (existingUser) {
         return res.status(400).json({ message: 'User already exists' });
       }
@@ -17,21 +21,21 @@ const authController = {
       const hashedPassword = await bcrypt.hash(password, 10);
 
       // Create user
-      const user = await User.create({
+      const newUser = await User.create({
         username,
         email,
         password: hashedPassword
       });
 
       // Create token
-      const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '1d' });
+      const token = jwt.sign({ userId: newUser.id }, process.env.JWT_SECRET, { expiresIn: '1d' });
 
       res.status(201).json({ 
         token,
         user: {
-          id: user.id,
-          username: user.username,
-          email: user.email
+          id: newUser.id,
+          username: newUser.username,
+          email: newUser.email
         }
       });
     } catch (error) {
@@ -42,32 +46,28 @@ const authController = {
   login: async (req, res) => {
     try {
       const { email, password } = req.body;
-      
-      // Find user
-      const user = await User.findOne({ where: { email } });
-      if (!user) {
-        return res.status(401).json({ message: 'Invalid credentials' });
+
+      const user = await User.unscoped().findOne({ where: { email } });
+      if (!user || !user.password) {
+        return res.status(401).render('login', { title: 'Login', error_msg: 'Invalid credentials' });
       }
 
-      // Check password
       const isMatch = await bcrypt.compare(password, user.password);
       if (!isMatch) {
-        return res.status(401).json({ message: 'Invalid credentials' });
+        return res.status(401).render('login', { title: 'Login', error_msg: 'Invalid credentials' });
       }
 
-      // Create token
-      const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '1d' });
+      // Save user in session
+      req.session.user = {
+        id: user.id,
+        username: user.username,
+        email: user.email
+      };
 
-      res.json({ 
-        token,
-        user: {
-          id: user.id,
-          username: user.username,
-          email: user.email
-        }
-      });
+      res.redirect('/dashboard');
     } catch (error) {
-      res.status(500).json({ message: error.message });
+      console.error("Login error:", error.message);
+      res.status(500).render('login', { title: 'Login', error_msg: 'Internal server error' });
     }
   }
 };

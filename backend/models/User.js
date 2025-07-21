@@ -3,7 +3,7 @@ module.exports = (sequelize, DataTypes) => {
     username: {
       type: DataTypes.STRING,
       allowNull: false,
-      unique: true,
+      // unique: true,
       validate: {
         len: [3, 30],
         notContains: ' ',
@@ -41,16 +41,22 @@ module.exports = (sequelize, DataTypes) => {
 
   // Associations
   User.associate = (models) => {
-    User.hasOne(models.Wallet, {
-      foreignKey: 'userId',
-      as: 'wallet'
-    });
-    
-    User.hasMany(models.Transaction, {
-      foreignKey: 'userId',
-      as: 'transactions'
-    });
+    // ✅ Check if models.Wallet is passed correctly
+    if (models.Wallet) {
+      User.hasOne(models.Wallet, {
+        foreignKey: 'userId',
+        as: 'wallet'
+      });
+    }
+
+    if (models.Transaction) {
+      User.hasMany(models.Transaction, {
+        foreignKey: 'userId',
+        as: 'transactions'
+      });
+    }
   };
+
 
   // Password hashing
   User.beforeSave(async (user) => {
